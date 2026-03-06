@@ -1,33 +1,25 @@
 ## Summary ##
-conditionalFD is an R package to identify valid front-door sets and their associated adjustment sets in directed acyclic graphs (DAGs).
-Using DAGs defined via dagitty, the package enables researchers to specify exposure and outcome nodes and systematically search for front-door identification strategies.
+FindFD is an R package to identify valid front-door sets in directed acyclic graphs (DAGs). Using DAGs defined via dagitty, the package enables researchers to specify exposure and outcome nodes and systematically search for front-door identification strategies.
 
 ## Why this package? ##
-- Legible, explicit output: adjustment sets and mediators are printed in user-friendly format.
-- Supports different adjustment set formats.
+- Legible, explicit output: mediators are printed in user-friendly format.
 - Speed and accuracy as priorities.
-- Provides information on how identification works, rather than simply indicating whether a DAG is identifiable.
-
 
 ## Example usage:
 
 find_fd takes in parameters:
 
 (required)
-- `dag` (dagitty object) : the graph in which to find mediators and adjustment sets
+- `dag` (dagitty object) : the graph in which to find mediators
 - `X` (string) : the exposure node name
 - `Y` (string) : the outcome node name
 
 (optional)
-- `verbose=TRUE` (boolean) : whether to print more detailed output
-- `adj_type="minimal"` (string) : type of adjustment sets to find (see dagitty documentation for more)
+- `verbose=TRUE` (boolean) : whether to print output during intermediary steps
 
 find_fd outputs:
-- printed information about mediators and adjustment sets
-- returns an S3 object with attributes (as lists of lists of strings)
-    - `adjustment_X_Z` : valid adjustment sets between the exposure and mediator(s)
-    - `adjustment_Y_Z` : valid adjustment sets between the mediator(s) and outcome
-    - `Z` : valid mediator nodes
+- printed information about mediators
+- returns a list of potential mediators as strings
 
 #### INPUT:
 ```r
@@ -39,19 +31,14 @@ X [pos=\"0,0\"]
   Y [pos=\"2,0\"]
 }")
 
-find_fd(dag1, "X", "Y")
+find_fd(dag1, "X", "Y", verbose=FALSE)
 ```
 #### OUTPUT:
 ```
----- Adjustment I (block X <-> Z) ----
-{M}: found 1 W set(s). Example: {}
----- Adjustment II (block Z <-> Y given X) ----
-{M}: 1 T set(s). Example: {}
-==== Final front-door solutions ====
-Front-door | Adjustment I (X-M) | Adjustment II (M-Y)
-        {M}                 {}                 {}
+==== Valid front-door sets ====
+  {M} 
 ```
-Explanation: M is a valid front-door between X and Y. There are no additional confounders to condition on for this front-door to work.
+Explanation: M is a valid front-door between X and Y.
 #### INPUT:
 ```r
 dag2 <- dagitty::dagitty("dag {
@@ -68,21 +55,16 @@ U1 [pos=\"0,1\"]
   U2 [pos=\"2,1\"]
 }")
 
-find_fd(dag2, "A", "C", verbose=FALSE, adj_type="canonical")
+find_fd(dag2, "A", "C", verbose=TRUE)
 ```
 #### OUTPUT:
 ```
-B
----- Exposure-Mediator Adjustment (block X <-> M) ----
-{B}: found 1 W set(s). Example: {U1,U2}
----- Mediator-Outcome Adjustment (block M <-> Y given X) ----
-{B}: 1 T set(s). Example: {A,U1,U2}
-==== Final front-door solutions ====
- Front-door |  Adjustment I (block X <-> Z) | Adjustment II (block Z <-> Y)
-          {B}                         {U1,U2}                     {A,U1,U2}
-                     
+Candidate nodes: B
+Total candidate sets: 1
+No valid front-door sets found.
+No valid front-door                
 ```
-Explanation: {B} is a valid front-door set, but identification requires conditioning. {U1, U2} blocks all backdoors on A ~> B and {A, U1, U2} blocks backdoors on B ~> C conditional on A. If we ran with adj_type="minimal", we would have smaller adjustment sets: namely, {U1} and {U2}, respectively.
+Explanation: {B} would be a valid front-door set, but identification requires conditioning. Because of confounders {U1, U2}, there are no unconditional front door sets.
 
 ## Citations
 
