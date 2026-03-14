@@ -53,31 +53,34 @@ find_fd <- function(dag, X, Y, verbose=TRUE) {
     return(invisible(NULL))
   }
 
-  # ---- STEP 1: candidate sets (intercept X -> ... -> Y) ----
-  cand_nodes <- setdiff(intersect(descendants(dag, X), ancestors(dag, Y)), c(X, Y))
-  if (!length(cand_nodes)) {
-    if (verbose) message("No candidates on directed X->...->Y paths.")
-    cat("No valid front-door\n")
-    return(invisible(NULL))
-  }
-  cand_sets <- power_set(cand_nodes)
-  if (verbose) {
-    message("Candidate nodes: ", paste(sort(cand_nodes), collapse = ", "))
-    message("Total candidate sets: ", length(cand_sets))
-  }
-
   # Pre-compute dag_Xcut once (remove outgoing edges from X)
   dag_Xcut <- remove_out_edges(dag, X)
 
-  # ---- STEP 2: check two blocking criteria (method: remove outgoing edges, find back-doors) ----
+  # ---- STEP 1: candidate sets (intercept X -> ... -> Y) ----
+  paths <- find_paths(dag, X, Y)
+
+  # Implicitly check Criterion 2 before constructing candidate sets
+  paths <- lapply(paths, function(path) {
+    Filter(function(v) {
+      v == X || v == Y || dseparated(dag_Xcut, X, v, list())
+    }, path)
+  })
+
+  # All cand_sets block all directed paths and have no backdoors X -> M
+  cand_sets <- subset_paths(paths, X, Y)
+
+  if(!length(cand_sets)) {
+    if (verbose) message("No candidates found.")
+    cat("No valid front-door\n"); return(invisible(NULL))
+  }
+  else {
+    message(paste0("Candidates: ", paste(vapply(cand_sets, fmt_set, ""), collapse = ", ")))
+  }
+
+  # ---- STEP 2: check final blocking criteria (method: remove outgoing edges, find back-doors) ----
   valid_sets <- list()
 
   for (M in cand_sets) {
-    # Criterion 2: Back-doors X -> ... -> M do not exist
-    if (!dseparated(dag_Xcut, X, M, list())) {
-      next
-    }
-    if (verbose) message("Criterion 2 OK: ", fmt_set(M))
 
     # Criterion 3: Back-doors M -> ... -> Y do not exist, given X
     dag_Mcut <- remove_out_edges(dag, M)
