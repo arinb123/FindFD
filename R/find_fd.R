@@ -66,6 +66,10 @@ find_fd <- function(dag, X, Y, verbose=TRUE) {
     }, path)
   })
 
+  if (any(sapply(paths, function(p) length(setdiff(p, c(X, Y))) == 0))) {
+    cat("No valid front-door\n"); return(invisible(NULL))
+  }
+
   # All cand_sets block all directed paths and have no backdoors X -> M
   cand_sets <- subset_paths(paths, X, Y)
 
