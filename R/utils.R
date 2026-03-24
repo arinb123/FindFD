@@ -5,14 +5,6 @@ fmt_set <- function(s) {
   paste0("{", paste(sort(unique(s)), collapse = ","), "}")
 }
 
-power_set <- function(xs) {
-  out <- list()
-  n   <- length(xs)
-  if (n == 0) return(out)
-  for (k in seq_len(n)) out <- c(out, utils::combn(xs, k, simplify = FALSE))
-  out
-}
-
 # Remove all outgoing directed edges from one or more nodes
 remove_out_edges <- function(dag, nodes_to_cut) {
   nodes_to_cut <- as.character(nodes_to_cut)

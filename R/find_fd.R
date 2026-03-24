@@ -67,6 +67,7 @@ find_fd <- function(dag, X, Y, verbose=TRUE) {
   })
 
   if (any(sapply(paths, function(p) length(setdiff(p, c(X, Y))) == 0))) {
+    if (verbose) message("No candidates pass Criterion 2.\n")
     cat("No valid front-door\n"); return(invisible(NULL))
   }
 
